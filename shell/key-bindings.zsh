@@ -26,6 +26,20 @@ __fzfcmd() {
     echo "fzf-tmux -d${FZF_TMUX_HEIGHT:-40%}" || echo "fzf"
 }
 
+fzf_binding() {
+  local -A default
+  default=(
+    file '^T'
+    cd '\ec'
+    history '^R'
+  )
+  local binding
+  if ! zstyle -s ':fzf:bindings' "$1" binding; then
+    binding="${default[$1]}"
+  fi
+  echo -n "$binding"
+}
+
 fzf-file-widget() {
   LBUFFER="${LBUFFER}$(__fsel)"
   local ret=$?
@@ -34,7 +48,7 @@ fzf-file-widget() {
   return $ret
 }
 zle     -N   fzf-file-widget
-bindkey '^T' fzf-file-widget
+bindkey "$(fzf_binding file)" fzf-file-widget
 
 # Ensure precmds are run after cd
 fzf-redraw-prompt() {
@@ -63,7 +77,7 @@ fzf-cd-widget() {
   return $ret
 }
 zle     -N    fzf-cd-widget
-bindkey '\ec' fzf-cd-widget
+bindkey "$(fzf_binding cd)" fzf-cd-widget
 
 # CTRL-R - Paste the selected command from history into the command line
 fzf-history-widget() {
@@ -82,7 +96,10 @@ fzf-history-widget() {
   typeset -f zle-line-init >/dev/null && zle zle-line-init
   return $ret
 }
+
 zle     -N   fzf-history-widget
-bindkey '^R' fzf-history-widget
+bindkey "$(fzf_binding history)" fzf-history-widget
+
+unset -f fzf_binding
 
 fi
